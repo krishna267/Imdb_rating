@@ -1,4 +1,4 @@
-from tkinter import Tk
+from tkinter import *
 from tkinter.filedialog import askdirectory
 import os,re
 from apiclient.discovery import build
@@ -18,22 +18,41 @@ def getRating(queryString):
 		return rating
 
 #select folder GUI
-Tk().withdraw()
-foldername = askdirectory()
+def select():	
+	Tk().withdraw()
+	global foldername 
+	foldername = askdirectory()
 
-exten = ".mkv"
+def todo():
+	#finding files with particular extension
+	exten = variable.get()
+	results = []
+	results += [each for each in os.listdir(foldername) if each.endswith(exten)]
+	print(results)
 
-#finding files with particular extension
-results = []
-results += [each for each in os.listdir(foldername) if each.endswith(exten)]
-print(results)
+	#google custom search
+	global service 
+	service = build('customsearch','v1',developerKey = API_KEY)
+	os.chdir(foldername)
+	for mov in results:
+		nam = mov.replace(exten,"")
+		if not nam.endswith("-imdb)"):
+			print(mov)
+			search_term = PTN.parse(mov)
+			os.rename(mov,search_term['title']+ "(" + getRating(search_term['title']) +"-imdb)"+exten)
+	return
 
-#google custom search
-service = build('customsearch','v1',developerKey = API_KEY)
-os.chdir(foldername)
-for mov in results:
-	nam = mov.replace(exten,"")
-	if nam.endswith("-imdb)"):
-		print(mov)
-		search_term = PTN.parse(mov)
-		os.rename(mov,search_term['title']+ "(" + getRating(search_term['title']) +"-imdb)"+exten)
+root = Tk()
+root.minsize(width = 200, height = 200)
+root.maxsize(width = 200, height = 200)
+futton = Button(root, text = "Select Folder",command = select)
+futton.pack()
+
+variable = StringVar(root)
+variable.set(".mkv") #default value
+w = OptionMenu(root, variable, ".mkv", ".mp4", ".avi")
+w.pack()
+button = Button(root,text = "Go",command = todo)
+button.pack()
+
+mainloop()
